@@ -2,14 +2,22 @@ import pygame
 from constants import *
 from player import Player
 from asteroidfield import AsteroidField
-from asteroids import Asteroid
+from asteroids import Asteroid, Explosion, Debris
 from shots import Shot
 from powerups import TripleShotPowerUp
+from startscreen import start_screen
 import sys
 import random
 
 def main():
     pygame.init()
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+
+     # Show start screen
+    if not start_screen(screen):
+        pygame.quit()
+        sys.exit()
+
     clock = pygame.time.Clock()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
@@ -18,22 +26,26 @@ def main():
     asteroids = pygame.sprite.Group()
     shots = pygame.sprite.Group()
     powerups = pygame.sprite.Group()
+    debris_group = pygame.sprite.Group()
+    explosion = pygame.sprite.Group()
+    
 
     
     Asteroid.containers = (updatable, drawables, asteroids)
+    Debris.containers = (updatable, drawables, debris_group)
+    Explosion.containers = (updatable, drawables, explosion)
     Shot.containers = (updatable, drawables, shots)
     TripleShotPowerUp.containers = (updatable, drawables, powerups)
     AsteroidField.containers = updatable
     asteroid_field = AsteroidField()
     
     Player.containers = (updatable, drawables)
+    print(f"Debris.containers: {Debris.containers}")
 
     player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
 
     score = 0
-
     dt = 0
-
     font = pygame.font.Font(None, 36)
 
     while True:
@@ -47,7 +59,6 @@ def main():
 
         score_text = font.render(f"Score: {score}", True, (255, 255, 255))
         screen.blit(score_text, (10, 10))
-        
         for powerup in powerups:
             if player.collision(powerup):
                 print("Power-up collected!")
@@ -67,7 +78,7 @@ def main():
         for asteroid in asteroids:
             for shot in shots:
                 if asteroid.collision(shot):
-                    print("Asteroid hit!")
+                    
                     # Handle collision (e.g., destroy asteroid, score points, etc.)
                     # For now, just print a message
                     # You can also remove the asteroid or shot here if needed
@@ -76,9 +87,14 @@ def main():
                     asteroid.split()
 
                     shot.kill()
+                    
+
+                
+
                     if random.random() < POWERUP_DROP_RATE:
                         powerup = TripleShotPowerUp(asteroid.position.x, asteroid.position.y)
                         powerup.velocity = asteroid.velocity
+                    
         pygame.display.flip()
         dt = clock.tick(60) / 1000
 
